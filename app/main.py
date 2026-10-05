@@ -10,16 +10,19 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://badminton-peach-eta.vercel.app",
+        "https://badminton-ftlvs9l7s-vipraoil-s-projects.vercel.app",
         "http://localhost:3000",
         "http://localhost:8081",
         "http://localhost:19006",
         "http://localhost:8080",
     ],
-    allow_origin_regex=r"^https:\/\/([a-zA-Z0-9-]+\.)*vercel\.app$|^https:\/\/.*\.onrender\.com$|^http:\/\/localhost(:\d+)?$",
+    # Matches ALL *.vercel.app preview and production URLs + onrender.com + localhost
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com|http://localhost(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=3600,
 )
 
 @app.on_event("startup")

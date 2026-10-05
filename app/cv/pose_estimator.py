@@ -108,15 +108,19 @@ class MediaPipePoseEstimator(PoseEstimator):
             urllib.request.urlretrieve(MODEL_DOWNLOAD_URL, str(target_model))
 
         if MediaPipePoseEstimator._landmarker_instance is None:
-            options = PoseLandmarkerOptions(
-                base_options=BaseOptions(model_asset_path=str(target_model)),
-                running_mode=RunningMode.IMAGE,
-                num_poses=1,
-                min_pose_detection_confidence=0.45,
-                min_pose_presence_confidence=0.45,
-                min_tracking_confidence=0.45,
-            )
-            MediaPipePoseEstimator._landmarker_instance = PoseLandmarker.create_from_options(options)
+            try:
+                options = PoseLandmarkerOptions(
+                    base_options=BaseOptions(model_asset_path=str(target_model)),
+                    running_mode=RunningMode.IMAGE,
+                    num_poses=1,
+                    min_pose_detection_confidence=0.45,
+                    min_pose_presence_confidence=0.45,
+                    min_tracking_confidence=0.45,
+                )
+                MediaPipePoseEstimator._landmarker_instance = PoseLandmarker.create_from_options(options)
+            except Exception as mp_err:
+                print(f"Warning: MediaPipe Tasks initialization failed ({mp_err}). Fallback estimator will be used.")
+                MediaPipePoseEstimator._landmarker_instance = None
 
         self.landmarker = MediaPipePoseEstimator._landmarker_instance
 
@@ -126,7 +130,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         Downsamples frame to max_dim for fast inference while preserving
         normalized [0.0, 1.0] coordinate invariance.
         """
-        if frame is None or frame.size == 0:
+        if frame is None or frame.size == 0 or self.landmarker is None:
             return PoseResult([], 0.0)
 
         h, w = frame.shape[:2]

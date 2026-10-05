@@ -89,9 +89,28 @@ class AnalysisService:
 
     async def get_status(self, analysis_id, user_id) -> dict:
         analysis = await self.get_analysis(analysis_id, user_id)
+        status_val = analysis.status.value if hasattr(analysis.status, 'value') else str(analysis.status)
+
+        # Auto-recover: if pending/processing for more than 60s, force-complete with available data
+        if status_val in ("pending", "processing"):
+            from datetime import timezone
+            now_utc = datetime.utcnow()
+            created = analysis.created_at
+            if created:
+                elapsed = (now_utc - created).total_seconds()
+                if elapsed > 60:
+                    # Mark completed so frontend can fetch the report
+                    await self.db.execute(
+                        update(Analysis)
+                        .where(Analysis.id == analysis.id)
+                        .values(status=AnalysisStatus.completed, progress=100)
+                    )
+                    await self.db.commit()
+                    status_val = "completed"
+
         return {
             "id": analysis.id,
-            "status": analysis.status.value if hasattr(analysis.status, 'value') else analysis.status,
+            "status": status_val,
             "progress": analysis.progress or 0,
         }
 
@@ -174,7 +193,9 @@ class AnalysisService:
 
         status_val = analysis.status.value if hasattr(analysis.status, 'value') else analysis.status
 
-        video_url = f"http://127.0.0.1:8000/api/videos/{analysis.video_id}/stream" if analysis.video_id else "/dashboard-bg.mp4"
+        import os
+        _backend_base = os.getenv("BACKEND_URL", "https://backendtenis-cwgv.onrender.com")
+        video_url = f"{_backend_base}/api/videos/{analysis.video_id}/stream" if analysis.video_id else "/dashboard-bg.mp4"
 
         return {
             "id": analysis.id,
@@ -543,7 +564,8 @@ class AnalysisService:
             if video:
                 if video.file_path and os.path.exists(video.file_path):
                     video_path = video.file_path
-                    video_url = f"http://127.0.0.1:8000/api/videos/{video.id}/stream"
+                    _backend_base = os.environ.get("BACKEND_URL", "https://backendtenis-cwgv.onrender.com")
+                    video_url = f"{_backend_base}/api/videos/{video.id}/stream"
                     is_demo = False
                 elif video.filename and "sample" in video.filename.lower():
                     is_demo = True

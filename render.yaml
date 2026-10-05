@@ -16,3 +16,5 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         value: "*"
+      - key: BACKEND_URL
+        value: "https://backendtenis-cwgv.onrender.com"

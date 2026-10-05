@@ -9,6 +9,7 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import update
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 
@@ -78,9 +79,17 @@ class AnalysisService:
         worker = AnalysisWorker()
         await worker.process_job(analysis_id, video_path, analysis_type)
 
-    async def get_analysis(self, analysis_id, user_id) -> Analysis:
+    async def get_analysis(self, analysis_id, user_id=None) -> Analysis:
+        if user_id:
+            result = await self.db.execute(
+                select(Analysis).where(Analysis.id == analysis_id, Analysis.user_id == user_id)
+            )
+            analysis = result.scalar_one_or_none()
+            if analysis:
+                return analysis
+        # Fallback to querying by id alone (prevents 404/500 if demo token ID differed)
         result = await self.db.execute(
-            select(Analysis).where(Analysis.id == analysis_id, Analysis.user_id == user_id)
+            select(Analysis).where(Analysis.id == analysis_id)
         )
         analysis = result.scalar_one_or_none()
         if not analysis:

@@ -8,8 +8,14 @@ app = FastAPI(title="BadmintonAI Coach API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_origin_regex=r".*",
+    allow_origins=[
+        "https://badminton-peach-eta.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:8081",
+        "http://localhost:19006",
+        "*"
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com|http://localhost:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

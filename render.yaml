@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: backendtenis
+    runtime: python
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DEMO_MODE
+        value: "true"
+      - key: STORAGE_PATH
+        value: "./storage"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"

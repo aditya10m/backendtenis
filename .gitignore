@@ -1,0 +1,29 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environment files
+.env
+.env.local
+
+# Databases
+*.db
+*.sqlite3
+
+# Video uploads in storage (keep demo/sample assets and gitkeep)
+storage/*.mp4
+storage/*.mov
+storage/*.avi
+storage/*.webm
+storage/*.zip
+storage/analyses/
+!storage/.gitkeep

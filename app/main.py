@@ -1,8 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import api_router
 from app.core.config import settings
 import os
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="BadmintonAI Coach API", version="1.0.0")
 
@@ -25,9 +30,27 @@ app.add_middleware(
     max_age=3600,
 )
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Global exception on {request.method} {request.url.path}: {exc}\n{traceback.format_exc()}")
+    origin = request.headers.get("origin", "*")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "path": request.url.path},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    )
+
 @app.on_event("startup")
 async def startup_event():
     os.makedirs(settings.STORAGE_PATH, exist_ok=True)
+    from app.core.database import init_models
+    try:
+        await init_models()
+    except Exception as e:
+        logger.error(f"Warning initializing DB tables: {e}")
 
 @app.get("/")
 async def root():
